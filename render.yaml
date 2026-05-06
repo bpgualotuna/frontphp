@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: gestion-citas-medicas
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 18
+      - key: VITE_API_BASE_URL
+        value: http://localhost:8080/api
+      - key: VITE_APP_NAME
+        value: Sistema de Gestión Médica
