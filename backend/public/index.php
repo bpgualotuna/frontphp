@@ -3,8 +3,27 @@
 /**
  * API Backend - Sistema de Gestión de Citas Médicas
  * Entry point de la aplicación
+ * 
+ * Este archivo maneja tanto las peticiones de API como sirve el frontend
  */
 
+// Si la petición NO es para /api/, servir el frontend
+$requestUri = $_SERVER['REQUEST_URI'];
+if (strpos($requestUri, '/api/') !== 0) {
+    // Si es un archivo estático (CSS, JS, imágenes), servirlo
+    $filePath = __DIR__ . parse_url($requestUri, PHP_URL_PATH);
+    if (file_exists($filePath) && is_file($filePath)) {
+        return false; // Dejar que PHP sirva el archivo
+    }
+    
+    // Si no es un archivo, servir index.html (para rutas de React Router)
+    if (file_exists(__DIR__ . '/index.html')) {
+        readfile(__DIR__ . '/index.html');
+        exit;
+    }
+}
+
+// Continuar con la API
 require __DIR__ . '/../vendor/autoload.php';
 
 use Slim\Factory\AppFactory;

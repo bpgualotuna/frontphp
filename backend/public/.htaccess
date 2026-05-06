@@ -1,4 +1,16 @@
-RewriteEngine On
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^ index.php [QSA,L]
+# Configuración para servir frontend y API desde el mismo servidor
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Si la petición es para la API, procesarla con PHP
+    RewriteCond %{REQUEST_URI} ^/api/
+    RewriteRule ^(.*)$ index.php [QSA,L]
+    
+    # Si el archivo existe (CSS, JS, imágenes), servirlo directamente
+    RewriteCond %{REQUEST_FILENAME} -f
+    RewriteRule ^ - [L]
+    
+    # Si es una ruta del frontend, servir index.html
+    RewriteRule ^ index.html [L]
+</IfModule>
