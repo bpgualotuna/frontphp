@@ -1,29 +1,40 @@
 /**
  * API de Terapias - RTK Query
- * Conectado a la API PHP Backend
+ * Servicio mock para gestión de terapias
  */
 
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { Terapia } from '../types';
+import { mockTerapias } from './mocks/terapiasMock';
 
 export const terapiasApi = createApi({
   reducerPath: 'terapiasApi',
-  baseQuery: fetchBaseQuery({
-    baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api',
-  }),
+  baseQuery: fetchBaseQuery({ baseURL: '/api' }),
   tagTypes: ['Terapias'],
   endpoints: (builder) => ({
     // Obtener todas las terapias activas
     getTerapias: builder.query<Terapia[], void>({
-      query: () => '/terapias',
-      transformResponse: (response: any) => response.data,
+      queryFn: async () => {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        const terapias = mockTerapias.filter(t => t.activa);
+        return { data: terapias };
+      },
       providesTags: ['Terapias'],
     }),
     
     // Obtener terapia por ID
     getTerapiaById: builder.query<Terapia, number | string>({
-      query: (id) => `/terapias/${id}`,
-      transformResponse: (response: any) => response.data,
+      queryFn: async (id) => {
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        const terapia = mockTerapias.find(t => t.id === id);
+        if (!terapia) {
+          return { error: { status: 404, data: 'Terapia no encontrada' } };
+        }
+        
+        return { data: terapia };
+      },
       providesTags: ['Terapias'],
     }),
   }),

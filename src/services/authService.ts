@@ -1,73 +1,149 @@
 /**
- * Servicio de Autenticación
- * Conectado a la API PHP Backend
+ * Servicio de Autenticación Mock
+ * Simula llamadas al backend para login y registro
  */
 
 import { LoginCredentials, RegisterData, LoginResult, User } from '../types';
-import axiosClient, { AUTH_TOKEN_KEY } from '../app/axiosClient';
+import { mockUsuarios, mockPasswords } from './mocks/usuariosMock';
+import { AUTH_TOKEN_KEY } from '../app/axiosClient';
+
+// Simular delay de red
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Generar token JWT mock
+const generateMockToken = (user: User): string => {
+  const payload = {
+    id: user.id,
+    cedula: user.cedula,
+    role: user.role,
+    exp: Date.now() + 24 * 60 * 60 * 1000, // 24 horas
+  };
+  
+  return btoa(JSON.stringify(payload));
+};
+
+// Validar token JWT mock
+const validateMockToken = (token: string): User | null => {
+  try {
+    const payload = JSON.parse(atob(token));
+    
+    // Verificar expiración
+    if (payload.exp < Date.now()) {
+      return null;
+    }
+    
+    // Buscar usuario
+    const user = mockUsuarios.find(u => u.id === payload.id);
+    return user || null;
+  } catch {
+    return null;
+  }
+};
 
 /**
  * Login de usuario
  */
 export const login = async (credentials: LoginCredentials): Promise<LoginResult> => {
-  try {
-    const response = await axiosClient.post('/auth/login', credentials);
-    
-    if (response.data.success && response.data.token) {
-      // Guardar token en sessionStorage
-      sessionStorage.setItem(AUTH_TOKEN_KEY, response.data.token);
-    }
-    
-    return response.data;
-  } catch (error: any) {
+  await delay(800);
+  
+  const { cedula, password } = credentials;
+  
+  // Buscar usuario por cédula
+  const user = mockUsuarios.find(u => u.cedula === cedula);
+  
+  if (!user) {
     return {
       success: false,
-      message: error.response?.data?.message || 'Error al iniciar sesión',
+      message: 'Usuario no encontrado. Verifica tu número de cédula.',
     };
   }
+  
+  // Verificar contraseña
+  const storedPassword = mockPasswords[cedula];
+  if (storedPassword !== password) {
+    return {
+      success: false,
+      message: 'Contraseña incorrecta.',
+    };
+  }
+  
+  // Generar token
+  const token = generateMockToken(user);
+  
+  // Guardar token en sessionStorage
+  sessionStorage.setItem(AUTH_TOKEN_KEY, token);
+  
+  return {
+    success: true,
+    user,
+    token,
+    message: 'Inicio de sesión exitoso',
+  };
 };
 
 /**
  * Registro de nuevo usuario (solo pacientes)
  */
 export const register = async (data: RegisterData): Promise<LoginResult> => {
-  try {
-    const response = await axiosClient.post('/auth/register', data);
-    
-    if (response.data.success && response.data.token) {
-      // Guardar token en sessionStorage
-      sessionStorage.setItem(AUTH_TOKEN_KEY, response.data.token);
-    }
-    
-    return response.data;
-  } catch (error: any) {
+  await delay(1000);
+  
+  const { cedula, nombresCompletos, password, direccion, edad, sexo, tieneSeguro, telefono, email } = data;
+  
+  // Verificar si el usuario ya existe
+  const existingUser = mockUsuarios.find(u => u.cedula === cedula);
+  if (existingUser) {
     return {
       success: false,
-      message: error.response?.data?.message || 'Error al registrar usuario',
+      message: 'Ya existe un usuario registrado con esta cédula.',
     };
   }
+  
+  // Crear nuevo usuario
+  const newUser: User = {
+    id: Date.now(),
+    cedula,
+    username: cedula,
+    fullName: nombresCompletos,
+    role: 'paciente',
+    direccion,
+    edad,
+    sexo,
+    tieneSeguro,
+    telefono,
+    email,
+    createdAt: new Date().toISOString(),
+  };
+  
+  // Agregar a la lista de usuarios mock
+  mockUsuarios.push(newUser);
+  mockPasswords[cedula] = password;
+  
+  // Generar token
+  const token = generateMockToken(newUser);
+  
+  // Guardar token en sessionStorage
+  sessionStorage.setItem(AUTH_TOKEN_KEY, token);
+  
+  return {
+    success: true,
+    user: newUser,
+    token,
+    message: 'Registro exitoso. Bienvenido al sistema.',
+  };
 };
 
 /**
  * Obtener información del usuario actual
  */
 export const getCurrentUser = async (): Promise<User | null> => {
-  try {
-    const token = sessionStorage.getItem(AUTH_TOKEN_KEY);
-    if (!token) {
-      return null;
-    }
-    
-    const response = await axiosClient.get('/auth/me');
-    
-    if (response.data.success) {
-      return response.data.user;
-    }
-    
-    return null;
-  } catch (error) {
+  await delay(300);
+  
+  const token = sessionStorage.getItem(AUTH_TOKEN_KEY);
+  if (!token) {
     return null;
   }
+  
+  return validateMockToken(token);
 };
 
 /**
@@ -81,17 +157,21 @@ export const logout = (): void => {
  * Actualizar perfil de usuario
  */
 export const updateProfile = async (userId: number | string, updates: Partial<User>): Promise<User | null> => {
-  try {
-    const response = await axiosClient.put('/auth/profile', updates);
-    
-    if (response.data.success) {
-      return response.data.user;
-    }
-    
-    return null;
-  } catch (error) {
+  await delay(500);
+  
+  const userIndex = mockUsuarios.findIndex(u => u.id === userId);
+  if (userIndex === -1) {
     return null;
   }
+  
+  // Actualizar usuario
+  mockUsuarios[userIndex] = {
+    ...mockUsuarios[userIndex],
+    ...updates,
+    updatedAt: new Date().toISOString(),
+  };
+  
+  return mockUsuarios[userIndex];
 };
 
 export default {
