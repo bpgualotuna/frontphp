@@ -7,6 +7,9 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Server\RequestHandlerInterface as RequestHandler;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
+use Firebase\JWT\ExpiredException;
+use Firebase\JWT\SignatureInvalidException;
+use Firebase\JWT\BeforeValidException;
 use App\Models\User;
 
 class AuthMiddleware
@@ -43,6 +46,30 @@ class AuthMiddleware
 
             return $handler->handle($request);
 
+        } catch (ExpiredException $e) {
+            $response = new \Slim\Psr7\Response();
+            $response->getBody()->write(json_encode([
+                'success' => false,
+                'message' => 'Token expirado',
+                'error' => $e->getMessage()
+            ]));
+            return $response->withStatus(401)->withHeader('Content-Type', 'application/json');
+        } catch (SignatureInvalidException $e) {
+            $response = new \Slim\Psr7\Response();
+            $response->getBody()->write(json_encode([
+                'success' => false,
+                'message' => 'Token inválido',
+                'error' => $e->getMessage()
+            ]));
+            return $response->withStatus(401)->withHeader('Content-Type', 'application/json');
+        } catch (BeforeValidException $e) {
+            $response = new \Slim\Psr7\Response();
+            $response->getBody()->write(json_encode([
+                'success' => false,
+                'message' => 'Token aún no es válido',
+                'error' => $e->getMessage()
+            ]));
+            return $response->withStatus(401)->withHeader('Content-Type', 'application/json');
         } catch (\Exception $e) {
             $response = new \Slim\Psr7\Response();
             $response->getBody()->write(json_encode([

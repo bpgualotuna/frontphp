@@ -7,7 +7,7 @@
         "illuminate/database": "^10.0",
         "illuminate/events": "^10.0",
         "vlucas/phpdotenv": "^5.5",
-        "firebase/php-jwt": "^6.8",
+        "firebase/php-jwt": "^7.0",
         "slim/slim": "^4.12",
         "slim/psr7": "^1.6",
         "tuupola/cors-middleware": "^1.4"
