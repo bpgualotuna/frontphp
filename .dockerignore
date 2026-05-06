@@ -1,0 +1,29 @@
+# Node
+node_modules/
+npm-debug.log*
+dist/
+
+# PHP
+backend/vendor/
+backend/composer.lock
+
+# Git
+.git/
+.gitignore
+
+# Environment
+.env
+.env.local
+backend/.env
+
+# Docs
+*.md
+!README.md
+
+# Editor
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
